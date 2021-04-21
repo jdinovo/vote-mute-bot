@@ -1,5 +1,5 @@
 # Mute Vote Bot
-Democratically mute users!
+Democratically mute users.
 
 ## Installation
 

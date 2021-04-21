@@ -13,6 +13,10 @@ module.exports = {
         let userToMute = message.mentions.members.first();
         let muteRole = message.guild.roles.cache.find(r => r.name === "muted");
 
+        if (userToMute.user.bot) {
+            message.channel.send('no.');
+            return;
+        }
 
         if (userToMute.roles.cache.has(muteRole.id)) {
             message.channel.send(new Discord.MessageEmbed().setColor('#FA1111').setTitle('Muted').setDescription(`<@${userId}> is already muted.`));
@@ -41,9 +45,12 @@ module.exports = {
             const upvote = collected.get('👍');
             const downvote = collected.get('👎');
 
+            const upvotes = upvote ? upvote.count - 1 : 0;
+            const downvotes = downvote ? downvote.count - 1 : 0;
+
             console.log(upvote);
 
-            if ((upvote.count - 1) > (downvote.count - 1) && (((upvote + downvote) - 2) > 5)) {
+            if (upvotes > downvotes && ((upvotes + downvotes) > 2)) {
                 console.log('VOTE PASSED');
 
                 rMessage.edit(new Discord.MessageEmbed().setColor('#11FA11').setTitle('Vote Passed').setDescription(`<@${userId}> has been muted for 5 minutes!`));
@@ -61,7 +68,6 @@ module.exports = {
 
             rMessage.reactions.removeAll().catch(error => console.error('Failed to clear reactions: ', error));
 
-            console.log(`Collected ${collected.size} items`);
         });
 
         
