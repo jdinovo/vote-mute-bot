@@ -53,9 +53,9 @@ module.exports = {
             const upvotes = upvote ? upvote.count - 1 : 0;
             const downvotes = downvote ? downvote.count - 1 : 0;
 
-            console.log(upvote);
+            const minVoteRequirement = ((upvotes + downvotes) > 3);
 
-            if (upvotes > downvotes && ((upvotes + downvotes) > 3)) {
+            if (upvotes > downvotes && minVoteRequirement) {
                 console.log('VOTE PASSED');
 
                 rMessage.edit(new Discord.MessageEmbed().setColor('#11FA11').setTitle('Vote Passed').setDescription(`<@${userId}> has been muted for 5 minutes!`));
@@ -68,7 +68,14 @@ module.exports = {
                 }, (5 * 60000));
             } else {
                 console.log('VOTE FAILED');
-                rMessage.edit(new Discord.MessageEmbed().setColor('#FA1111').setTitle('Vote Failed').setDescription(`<@${userId}> has not been muted.`));
+                const failEmbed = new Discord.MessageEmbed().setColor('#FA1111').setTitle('Vote Failed').setDescription(`<@${userId}> has not been muted.`);
+                if (!minVoteRequirement) {
+                    failEmbed.addField('Reason', 'Not enough votes.');
+                } else {
+                    failEmbed.addField('Reason', `Yes: ${upvotes} No: ${downvotes}`);
+                }
+
+                rMessage.edit(failEmbed);
             }
 
             rMessage.reactions.removeAll().catch(error => console.error('Failed to clear reactions: ', error));
