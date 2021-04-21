@@ -4,7 +4,7 @@ module.exports = {
     name: 'votemute',
     description: 'Call a vote to mute a given user.',
     aliases: ['votemute', 'vm'],
-    cooldown: 10,
+    cooldown: 20,
     args: true,
     usage: '<userToMute>',
     async execute(message, args) {
@@ -14,7 +14,12 @@ module.exports = {
         let muteRole = message.guild.roles.cache.find(r => r.name === "muted");
 
         if (userToMute.user.bot) {
-            message.channel.send('no.');
+            message.channel.send('You can\'t mute bots.');
+            return;
+        }
+
+        if (!muteRole) {
+            message.channel.send('Please create a `muted` role.');
             return;
         }
 
@@ -34,7 +39,7 @@ module.exports = {
             return ['👍', '👎'].includes(reaction.emoji.name) && user.id !== userToMute.id;
         };
 
-        const collector = rMessage.createReactionCollector(filter, { time: 10000 });
+        const collector = rMessage.createReactionCollector(filter, { time: 15000 });
 
 
         collector.on('collect', (reaction, user) => {
@@ -50,7 +55,7 @@ module.exports = {
 
             console.log(upvote);
 
-            if (upvotes > downvotes && ((upvotes + downvotes) > 2)) {
+            if (upvotes > downvotes && ((upvotes + downvotes) > 3)) {
                 console.log('VOTE PASSED');
 
                 rMessage.edit(new Discord.MessageEmbed().setColor('#11FA11').setTitle('Vote Passed').setDescription(`<@${userId}> has been muted for 5 minutes!`));
