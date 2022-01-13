@@ -4,12 +4,13 @@ module.exports = {
     name: 'votemute',
     description: 'Call a vote to mute a given user.',
     aliases: ['votemute', 'vm'],
-    cooldown: 30,
+    cooldown: 20,
     args: true,
     usage: '<userToMute>',
     async execute(message, args) {
 
         const sTime = 20;
+        let activeUsers = activeServers[message.guild.id];
         const minVotesRequired = Math.ceil(activeUsers.size * 0.6);
 
         let userId = args[0].replace(/\D/g, '');
@@ -25,7 +26,8 @@ module.exports = {
             return;
         }
         if (!muteRole) {
-            message.channel.send('Please create a `muted` role.');
+            message.channel.send('Please create a `muted` role. ' +
+            'Ensure this role does not have `send messages` permissions in any channel.');
             return;
         }
         if (userToMute.roles.cache.has(muteRole.id)) {
@@ -90,8 +92,7 @@ module.exports = {
             if (upvotes > downvotes && minVoteRequirement) {
                 console.log('VOTE PASSED');
 
-                const maxTime = 30 * 60
-
+                const maxTime = 30 * 60;
                 let muteTime = (upvotes >= activeUsers.size && downvotes < 1) ? maxTime : ((sTime * upvotes) * Math.abs(upvotes - downvotes));
 
                 // cap at 30mins

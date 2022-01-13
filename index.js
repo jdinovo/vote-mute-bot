@@ -16,7 +16,7 @@ const cooldowns = new Discord.Collection();
 
 console.log('~~~~~~~~Running Vote Mute Bot~~~~~~~~');
 let botID;
-global.activeUsers = new Map();
+global.activeServers = {};
 
 bot.on("ready", () => {
     botID = bot.user.id;
@@ -33,6 +33,11 @@ bot.on('message', message => {
     // prevent responding to self
     if (message.author.bot) return;
 
+    if (!activeServers.hasOwnProperty(message.guild.id)) {
+        activeServers[message.guild.id] = new Map();
+    }
+    let activeUsers = activeServers[message.guild.id];
+
     // clear user if exists
     activeUsers.delete(message.author.id);
     // add user to list
@@ -43,13 +48,13 @@ bot.on('message', message => {
     for (let [key, value] of activeUsers) {
         if (value < minsAgo) {
             activeUsers.delete(key);
-            console.log('Removing inactive user: ', key);
+            // console.log('Removing inactive user: ', key);
             continue;
         }
         break;
     }
 
-    console.log(activeUsers);
+    // console.log(activeUsers);
 
     // ignore anything that does not start with prefix
     if (!message.content.startsWith(prefix)) return;
