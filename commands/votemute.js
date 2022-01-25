@@ -9,7 +9,6 @@ module.exports = {
     usage: '<userToMute>',
     async execute(message, args) {
 
-        const sTime = 20;
         let activeUsers = activeServers[message.guild.id];
         const minVotesRequired = Math.ceil(activeUsers.size * 0.6);
 
@@ -91,11 +90,11 @@ module.exports = {
 
             if (upvotes > downvotes && minVoteRequirement) {
                 console.log('VOTE PASSED');
-
+                // 30 min max
                 const maxTime = 30 * 60;
-                let muteTime = (upvotes >= activeUsers.size && downvotes < 1) ? maxTime : ((sTime * upvotes) * Math.abs(upvotes - downvotes));
+                let muteTime = (upvotes >= activeUsers.size && downvotes < 1) ? maxTime : (maxTime * Math.pow((Math.abs(upvote - downvotes)/activeUsers.size), 2));
 
-                // cap at 30mins
+                // cap at max
                 muteTime = (muteTime > maxTime) ? maxTime : muteTime;
 
                 rMessage.edit(new Discord.MessageEmbed().setColor('#11FA11').setTitle('Vote Passed')
