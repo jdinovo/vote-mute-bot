@@ -1,7 +1,10 @@
 const fs = require('fs');
 const Discord = require("discord.js");
 const unmute = require("./utils/unmute.js");
-global.bot = new Discord.Client({ partials: ['MESSAGE', 'CHANNEL', 'REACTION'] });
+global.bot = new Discord.Client({ partials: ['MESSAGE', 'CHANNEL', 'REACTION'], intents: [Discord.Intents.FLAGS.GUILDS, 
+    Discord.Intents.FLAGS.GUILD_MESSAGES, 
+    Discord.Intents.FLAGS.GUILD_MEMBERS,
+    Discord.Intents.FLAGS.GUILD_MESSAGE_REACTIONS] });
 const { prefix, token } = require('./config.json');
 bot.commands = new Discord.Collection();
 const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'));
@@ -28,7 +31,7 @@ bot.on("ready", () => {
     
 });
 
-bot.on('message', message => {
+bot.on('messageCreate', message => {
 
     // prevent responding to self
     if (message.author.bot) return;
@@ -76,7 +79,7 @@ bot.on('message', message => {
             reply += `\nProper usage would be: \`${prefix}${command.name} ${command.usage}\``;
         }
 
-        return message.channel.send(reply);
+        return message.channel.send({content:reply});
     }
 
     // ---- set up for cooldowns below ----
@@ -93,7 +96,7 @@ bot.on('message', message => {
 
         if (now < expirationTime) {
             const timeLeft = (expirationTime - now) / 1000;
-            return message.reply(`you cannot use \`${command.name}\` for ${timeLeft.toFixed(1)} more second(s).`);
+            return message.reply({content:`you cannot use \`${command.name}\` for ${timeLeft.toFixed(1)} more second(s).`});
         }
     }
 
@@ -105,7 +108,7 @@ bot.on('message', message => {
         command.execute(message, args);
     } catch (error) {
         console.error(error);
-        message.reply('There was an error trying to execute that command!');
+        message.reply({content:'There was an error trying to execute that command!'});
     }
 });
 
