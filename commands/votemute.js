@@ -23,56 +23,66 @@ module.exports = {
             message.channel.send({content:'You can\'t mute bots.'});
             return;
         }
-        // if (userToMute.roles.cache.has(muteRole.id)) {
-        //     message.channel.send({embeds:[new Discord.MessageEmbed().setColor('#FA1111').setTitle('Muted').setDescription(`<@${userId}> is already muted.`)]});
-        //     return;
-        // }
+        if (userToMute.isCommunicationDisabled()) {
+            message.channel.send({embeds:[new Discord.MessageEmbed().setColor('#FA1111').setTitle('Muted').setDescription(`<@${userId}> is already muted.`)]});
+            return;
+        }
 
-        const embed = new Discord.MessageEmbed().setColor('#DDDD22').setTitle('Vote to Mute').setDescription(`Should <@${userId}> be muted?`);
+        const embed = new Discord.MessageEmbed().setColor('#DDDD22').setTitle('Vote to Mute').setDescription(`Should <@${userId}> be muted?`) //.addField('Results', `Yes: ${upvotes} No: ${downvotes}`);
 
-        let rMessage = await message.channel.send({ embeds: [embed] });
+        const row = new Discord.MessageActionRow()
+			.addComponents(
+				new Discord.MessageButton()
+					.setCustomId('yes')
+					.setLabel('Yes')
+					.setStyle('SUCCESS'),
+                new Discord.MessageButton()
+                    .setCustomId('no')
+                    .setLabel('No')
+                    .setStyle('DANGER')
+			);
 
-        rMessage.react('👍').then(() => rMessage.react('👎'));
+        let rMessage = await message.channel.send({ embeds: [embed], components: [row] });
 
-        const filter = (reaction, user) => {
-            return ['👍', '👎'].includes(reaction.emoji.name) && !user.bot;
-        };
+        const filter = i => i.customId === 'yes' || i.customId === 'no';
 
-        const collector = rMessage.createReactionCollector({filter, dispose: true, time: 25000 });
+        const collector = message.channel.createMessageComponentCollector({ filter, time: 25000 });
+
+        collector.on('collect', async i => {
+            if (i.customId === 'primary') {
+                await i.update({ content: 'A button was clicked!', components: [] });
+            }
+        });
 
         let upvotes = 0;
         let downvotes = 0;
+        let votedIds = {};
 
-        collector.on('collect', (reaction, user) => {
-            switch(reaction.emoji.name) {
-                case '👍':
-                    upvotes++;
-                    break;
-                case '👎':
-                    downvotes++;
-                    break;
-                default:
-                    break;
-            }
-
-            console.log(`Collected ${reaction.emoji.name} from ${user.tag}`);
-        });
-
-        collector.on('remove', (reaction, user) => {
-            switch(reaction.emoji.name) {
-                case '👍':
-                    if(upvotes > 0)
-                        upvotes--;
-                    break;
-                case '👎':
-                    if (downvotes > 0)
+        collector.on('collect', async i => {
+            
+            switch(i.customId) {
+                case 'yes':
+                    if(!votedIds.hasOwnProperty(i.user.id)) {
+                        upvotes++;
+                    } else if (votedIds.hasOwnProperty(i.user.id) && votedIds[i.user.id] === 'no') {
                         downvotes--;
+                        upvotes++;
+                    }
+                    break;
+                case 'no':
+                    if(!votedIds.hasOwnProperty(i.user.id)) {
+                        downvotes++;
+                    } else if (votedIds.hasOwnProperty(i.user.id) && votedIds[i.user.id] === 'yes') {
+                        upvotes--;
+                        downvotes++;
+                    }
                     break;
                 default:
                     break;
             }
-
-            console.log(`Removed ${reaction.emoji.name} from ${user.tag}`);
+            votedIds[i.user.id] = i.customId;
+            let updatedEmbed = new Discord.MessageEmbed().setColor('#DDDD22').setTitle('Vote to Mute').setDescription(`Should <@${userId}> be muted?`).addField('Tally', `Yes: ${upvotes} No: ${downvotes}`);
+            i.update({ embeds: [updatedEmbed], components: [row] });
         });
 
         collector.on('end', collected => {
@@ -93,7 +103,7 @@ module.exports = {
 
                 rMessage.edit({embeds: [new Discord.MessageEmbed().setColor('#11FA11').setTitle('Vote Passed')
                                 .setDescription(`<@${userId}> has been muted for ${muteTime > 60 ? Math.floor(muteTime / 60) + ' minute(s)' : muteTime + ' seconds(s)'}!`)
-                                .addField('Results', `Yes: ${upvotes} No: ${downvotes}`)]});
+                                .addField('Results', `Yes: ${upvotes} No: ${downvotes}`)], components: []});
 
                 userToMute.timeout(muteTime * 1000, `Vote Muted. Yes: ${upvotes} No: ${downvotes}`)
                 .then(() => {
@@ -111,17 +121,13 @@ module.exports = {
                 if (!minVoteRequirement) {
                     failEmbed.addField('Reason', `Not enough votes. (min. ${minVotesRequired})`);
                 } else {
-                    failEmbed.addField('Reason', `Yes: ${upvotes} No: ${downvotes}`);
+                    failEmbed.addField('Results', `Yes: ${upvotes} No: ${downvotes}`);
                 }
 
-                rMessage.edit({embeds: [failEmbed]});
+                rMessage.edit({embeds: [failEmbed], components: []});
             }
 
-            rMessage.reactions.removeAll().catch(error => console.error('Failed to clear reactions: ', error));
-
         });
-
-        
 
     },
 };
