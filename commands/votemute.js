@@ -46,13 +46,7 @@ module.exports = {
 
         const filter = i => i.customId === 'yes' || i.customId === 'no';
 
-        const collector = message.channel.createMessageComponentCollector({ filter, time: 25000 });
-
-        collector.on('collect', async i => {
-            if (i.customId === 'primary') {
-                await i.update({ content: 'A button was clicked!', components: [] });
-            }
-        });
+        const collector = rMessage.createMessageComponentCollector({ filter, time: 25000 });
 
         let upvotes = 0;
         let downvotes = 0;
