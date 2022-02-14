@@ -90,7 +90,8 @@ module.exports = {
                 console.log('VOTE PASSED');
                 // 30 min max
                 const maxTime = 30 * 60;
-                let muteTime = (upvotes >= activeUsers.size && downvotes < 1) ? maxTime : (maxTime * Math.pow((Math.abs(upvotes - downvotes)/activeUsers.size), 2));
+                let muteTime = (upvotes >= activeUsers.size && downvotes < 1) ? maxTime : (maxTime * Math.pow((upvotes/(upvotes + downvotes)), 2));
+                console.log(`MUTING USER ${userId} : YES (${upvotes}) NO (${downvotes}) Active Users (${activeUsers.size})`);
 
                 // cap at max
                 muteTime = (muteTime > maxTime) ? maxTime : muteTime;
